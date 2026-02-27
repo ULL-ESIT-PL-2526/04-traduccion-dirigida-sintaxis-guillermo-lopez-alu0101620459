@@ -110,7 +110,7 @@ describe('Parser Tests', () => {
       expect(() => parse("3 +")).toThrow();
       expect(() => parse("+ 3")).toThrow();
       expect(() => parse("3 + + 4")).toThrow();
-      expect(() => parse("3.5")).toThrow(); // Only integers are supported
+      expect(() => parse("3.5")).not.toThrow(); // Only integers are supported
     });
 
     test('should handle incomplete expressions', () => {
@@ -128,4 +128,71 @@ describe('Parser Tests', () => {
     });
   });
 
+  // Additional tests 
+  describe('Line comments', () => {
+    test('should ignore a comment at the end of an expression', () => {
+      expect(parse("3 + 4 // this is a comment")).toBe(7);
+    });
+
+    test('should ignore a full-line comment before the expression', () => {
+      expect(parse("// full line comment\n5 * 2")).toBe(10);
+    });
+
+    test('should ignore multiple comments', () => {
+      expect(parse("1 + 2 // first comment\n// second comment\n+ 3")).toBe(6);
+    });
+
+    test('should ignore comment with special characters inside', () => {
+      expect(parse("10 - 3 // result should be 7 !! @#$%")).toBe(7);
+    });
+
+    test('should handle expression that is only a comment', () => {
+      expect(() => parse("// just a comment")).toThrow();
+    });
+  });
+
+  describe('Floating point numbers', () => {
+    test('should parse simple decimal numbers', () => {
+      expect(parse("2.35")).toBeCloseTo(2.35);
+      expect(parse("23.0")).toBeCloseTo(23.0);
+      expect(parse("0.5")).toBeCloseTo(0.5);
+    });
+
+    test('should parse scientific notation with negative or positive exponent', () => {
+      expect(parse("2.35e-3")).toBeCloseTo(0.00235);
+      expect(parse("1e-2")).toBeCloseTo(0.01);
+      expect(parse("2.35e+3")).toBeCloseTo(2350);
+      expect(parse("1e+2")).toBeCloseTo(100);
+    });
+
+    test('should parse scientific notation with uppercase E', () => {
+      expect(parse("2.35E-3")).toBeCloseTo(0.00235);
+      expect(parse("2.35E+3")).toBeCloseTo(2350);
+    });
+
+    test('should parse scientific notation without sign', () => {
+      expect(parse("1e2")).toBeCloseTo(100);
+      expect(parse("2.5e3")).toBeCloseTo(2500);
+    });
+
+    test('should add two decimal numbers', () => {
+      expect(parse("1.5 + 2.5")).toBeCloseTo(4.0);
+      expect(parse("0.1 + 0.2")).toBeCloseTo(0.3);
+    });
+
+    test('should multiply decimal numbers', () => {
+      expect(parse("2.5 * 4.0")).toBeCloseTo(10.0);
+      expect(parse("1.5 * 2")).toBeCloseTo(3.0);
+    });
+
+    test('should divide decimal numbers', () => {
+      expect(parse("7.5 / 2.5")).toBeCloseTo(3.0);
+      expect(parse("1.0 / 3.0")).toBeCloseTo(0.3333333333333333);
+    });
+
+    test('should handle exponentiation with floats', () => {
+      expect(parse("2.0 ** 3")).toBeCloseTo(8.0);
+      expect(parse("9.0 ** 0.5")).toBeCloseTo(3.0);
+    });
+  });
 });
